@@ -1,0 +1,534 @@
+:root {
+        --forest-green: #2d5a27;
+        --hp-red: #ff4d4d;
+        --xp-green: #00bb00;
+        --glass: rgba(255, 255, 255, 0.9);
+    }
+
+    body {
+        font-family: "PingFang TC", sans-serif;
+        margin: 0; background: #1a1a1a; color: #333;
+        display: flex; justify-content: center; align-items: center; min-height: 100vh;
+    }
+
+/* 鎖定狀態：灰色、半透明、不可點擊 */
+.boss-btn-locked {
+    background: #444 !important;
+    color: #888 !important;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* 解鎖狀態：橘紅色、發光、呼吸效果 */
+.boss-btn-unlocked {
+    background: linear-gradient(45deg, #ff4500, #ff8c00) !important;
+    color: white !important;
+    cursor: pointer;
+    box-shadow: 0 0 15px rgba(255, 69, 0, 0.8);
+    animation: bossPulse 2s infinite;
+}
+
+@keyframes bossPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+    100% { transform: scale(1); }
+}
+
+
+/* 戰利品畫面 */
+#loot-screen {
+    background: var(--glass); /* 使用您定義的白色半透明背景 */
+    color: #333; /* 確保字體不是黑色 */
+    display: flex; /* 當隱藏被移除時，它是 flex 佈局 */
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 300px;
+}
+/* 再次確認 hidden 的優先權 */
+.hidden { display: none !important; }
+
+#loot-rewards {
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px;
+    border-radius: 15px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.loot-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    background: #f8f8f8;
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #eee;
+    min-width: 80px;
+    text-align: center;
+}
+
+.loot-item img {
+    width: 45px;
+    height: 45px;
+    object-fit: contain;
+}
+  
+  /* 失誤記號容器 */
+.miss-container {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 5px;
+    z-index: 100;
+}
+
+.miss-mark {
+    width: 25px;
+    height: 25px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 2px solid #ff4d4d;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: #ff4d4d;
+    font-weight: bold;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.miss-mark.active {
+    background: #ff4d4d;
+    color: white;
+    box-shadow: 0 0 10px #ff4d4d;
+    transform: scale(1.1);
+}
+  /* 怪物受傷抖動 */
+.shake-monster {
+    animation: monster-shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+/* 玩家受傷：畫面劇烈抖動並閃紅光 */
+.shake-screen {
+    animation: screen-shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+    background-color: rgba(255, 0, 0, 0.2) !important;
+    transition: background-color 0.1s;
+}
+
+@keyframes monster-shake {
+    10%, 90% { transform: translate3d(-2px, 0, 0); }
+    20%, 80% { transform: translate3d(4px, 0, 0); }
+    30%, 50%, 70% { transform: translate3d(-8px, 0, 0); }
+    40%, 60% { transform: translate3d(8px, 0, 0); }
+}
+
+@keyframes screen-shake {
+    10%, 90% { transform: translate3d(-4px, -4px, 0); }
+    20%, 80% { transform: translate3d(8px, 8px, 0); }
+    30%, 50%, 70% { transform: translate3d(-12px, -12px, 0); }
+    40%, 60% { transform: translate3d(12px, 12px, 0); }
+}
+
+/* 打擊光效 */
+.hit-flash {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px; height: 100px;
+    background: radial-gradient(circle, white 0%, transparent 70%);
+    border-radius: 50%;
+    opacity: 0; pointer-events: none;
+    z-index: 100;
+}
+.hit-active { animation: flash-anim 0.3s ease-out; }
+@keyframes flash-anim {
+    from { opacity: 1; transform: translate(-50%, -50%) scale(0.5); }
+    to { opacity: 0; transform: translate(-50%, -50%) scale(2); }
+}
+  
+    /* 關鍵修正：確保 hidden 優先權最高，不被 grid 影響 */
+    .hidden { display: none !important; }
+
+    /* --- 首頁佈局：左右分欄 --- */
+    .start-container {
+        display: flex; gap: 20px; width: 95%; max-width: 900px;
+        justify-content: center; flex-wrap: wrap;
+    }
+
+    .screen {
+        flex: 1; min-width: 300px; background: var(--glass);
+        padding: 25px; border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        text-align: center; position: relative;
+        background-size: cover; background-position: center;
+    }
+
+    .screen h2 {
+        margin-top: 0; color: var(--forest-green);
+        border-bottom: 2px solid var(--forest-green); padding-bottom: 10px;
+    }
+
+    /* --- 角色列表樣式 --- */
+    #load-info { max-height: 300px; overflow-y: auto; padding: 5px; }
+    
+    .char-card:hover {
+        border-color: var(--forest-green) !important;
+        background-color: #f0fdf0 !important;
+        transform: translateX(5px);
+    }
+
+    #load-info::-webkit-scrollbar { width: 5px; }
+    #load-info::-webkit-scrollbar-thumb { background: #ccc; border-radius: 10px; }
+
+    /* --- 遊戲選單與進度條 --- */
+/* --- 選單場景容器修復 --- */
+#menu-screen {
+    background-image: url('https://lh3.googleusercontent.com/d/1pZkP5xk_0h1c_SqJEh7QHrgIuEwggG2E');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    /* 關鍵：取消固定的 100vh，改用 min-height 讓內容自然延伸，背景才不會扁 */
+    min-height: 100vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 10px;
+    box-sizing: border-box;
+}
+
+/* --- 角色資訊區塊 --- */
+.char-info { 
+    display: flex; 
+    align-items: center; 
+    gap: 15px; 
+    background: rgba(255, 255, 255, 0.85); 
+    padding: 15px; 
+    border-radius: 15px; 
+    margin-bottom: 20px; 
+    border: 1px solid #ccc;
+    /* 修正：限制寬度，避免在平板上拉得太長 */
+    width: 95%;
+    max-width: 500px;
+    box-sizing: border-box;
+}
+
+.char-avatar { 
+    width: 70px; 
+    height: 70px; 
+    border-radius: 50%; 
+    object-fit: cover; 
+    border: 3px solid var(--forest-green); 
+    flex-shrink: 0; /* 確保頭像不會被擠壓 */
+}
+
+.stats-container { 
+    text-align: left; 
+    flex-grow: 1; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 4px; 
+}
+
+.gold-icon { 
+    width: 20px; 
+    height: 20px; 
+    vertical-align: middle; 
+    object-fit: contain; 
+}
+
+/* --- 血條與經驗條 (選單專用) --- */
+.bar-container { 
+    width: 100%; 
+    height: 24px; 
+    background: #444; 
+    border-radius: 12px; 
+    margin: 5px 0; 
+    overflow: hidden; 
+    position: relative; 
+    border: 1px solid #000; 
+}
+
+.hp-fill { height: 100%; background: var(--hp-red); transition: width 0.3s; }
+.xp-fill { height: 100%; background: var(--xp-green); transition: width 0.3s; }
+
+.bar-text {
+    position: absolute; 
+    top: 0; 
+    left: 0; 
+    width: 100%; 
+    height: 100%;
+    display: flex; 
+    justify-content: center; 
+    align-items: center;
+    font-size: 13px; 
+    color: white; 
+    font-weight: bold;
+    text-shadow: 1px 1px 2px #000; 
+    z-index: 10; 
+    pointer-events: none;
+}
+
+
+/* --- 1:4:3:2 戰鬥畫面比例修正 --- */
+#battle-screen {
+    display: flex; 
+    flex-direction: column;
+    padding: 0; 
+    gap: 0; 
+    height: 100vh; /* 改為 100vh，確保佔滿整個螢幕高度 */
+    width: 100%;   /* 寬度撐滿 */
+    max-width: 600px;
+/* 關鍵：這會把第一個區塊推向最頂，最後一個區塊推向最底，中間自動撐開 */
+    justify-content: space-between;
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    position: relative; 
+
+
+}
+/* 讓 .hidden 權限高於 display: flex */
+#battle-screen.hidden {
+    display: none !important;
+}
+#battle-bg-object {
+    position: absolute;
+    /* 這裡控制位置 */
+    top: 90px;      /* 負值代表往上移，正值代表往下移，您可以隨意拉 */
+    left: 50%;
+    transform: translateX(-50%); /* 水平置中 */
+    
+    width: 120%;      /* 故意讓它比螢幕寬，這樣移動時才不會露白邊 */
+    height: auto;     /* 維持圖片原本的黃金比例，絕對不破圖 */
+    z-index: 0;       /* 墊在最底層 */
+    display: block !important;
+}
+
+
+   /* 1: 怪物血條區 - 貼頂 */
+.battle-header {
+    position: absolute;
+    top: 0%;           
+    width: 100%;
+    height: 10%;        /* 固定佔螢幕一半高，不隨圖片膨脹 */ 
+    background: rgba(255, 255, 255, 0.85); 
+    display: flex; 
+    flex-direction: column; 
+    justify-content: center;
+    border-bottom: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+/* 1. 怪物區：固定在頂部 10% 的位置開始，佔據 50% 的高度 */
+.monster-viewport {
+    position: absolute;
+    top: 13%;           /* 釘在距離頂部 10% 的位置 */
+    left: 0;
+    width: 100%;
+    height: 60%;        /* 固定佔螢幕一半高，不隨圖片膨脹 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1;
+}
+
+#monster-img { 
+    height: 85%; 
+    max-width: 90%; 
+    object-fit: contain; 
+    animation: float 3s infinite ease-in-out; 
+}
+
+
+
+
+/* 3: 玩家控制區 - 這部分會被推向下方 */
+.player-controls-area {
+    
+    position: absolute; /* 關鍵：脫離排隊，直接定位 */
+    bottom: 0;         /* 釘在地上 */
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 20px 15px; 
+    display: flex; 
+    flex-direction: column;
+    justify-content: center; /* 讓內部元件均勻分布 */
+    border-top: 1px solid #ddd;
+    box-sizing: border-box;
+}
+
+
+/* 2: 底部其餘區 - 強制貼齊底部 */
+.battle-footer { 
+    flex: 2; 
+    display: flex; 
+    align-items: flex-start; /* 讓內容靠上，緊貼玩家控制區 */
+    justify-content: center; 
+    background: rgba(0,0,0,0.05);
+    width: 100%;
+    margin-top: auto; /* 科學關鍵：自動外距會將此區塊推至容器最底部 */
+}
+    /* --- 按鈕與特效：維持老師原有的美化設定 --- */
+.battle-controls { 
+    display: grid; 
+    grid-template-columns: 1fr 1fr 1fr; 
+    gap: 8px; 
+    margin-top: 5px; 
+}
+
+
+    
+/* 技能按鈕：僅保留方格形狀與定位 */
+.skill-btn { 
+    aspect-ratio: 1/1; /* 保持正方形 */
+    border: none; 
+    border-radius: 10px; /* 圓角 */
+    cursor: pointer; 
+    padding: 0; /* 移除內距，讓圖片撐滿 */
+    overflow: hidden; /* 確保圖片不超出圓角邊界 */
+    position: relative; /* 讓 CD 數字能以絕對定位覆蓋在圖片上 */
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+}
+
+/* 技能圖示：確保填滿按鈕 */
+.skill-btn img {
+    width: 80%;
+    height: 80%;
+    object-fit: cover; /* 科學縮放，防止圖片變形 */
+    pointer-events: none; /* 這能確保點擊事件穿透圖片，直達下層的按鈕 */
+}
+
+/* 當按鈕為 disabled 狀態（CD中）時的視覺回饋 */
+.skill-btn:disabled { 
+    filter: grayscale(1) opacity(0.6); /* 變灰且半透明 */
+}
+
+   /* 修正：atk-btn 的寬度與佈局 */
+.atk-btn { 
+    width: 100%; /* 確保在容器內撐滿 */
+    padding: 12px; 
+    font-size: 1.1rem; 
+    background: #2e7d32; /* 假設您的 var(--forest-green) */
+    color: white; 
+    border: 2px solid white; 
+    border-radius: 15px; 
+    cursor: pointer; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    gap: 10px;
+    box-sizing: border-box;
+}
+
+
+    /* 特效動畫保持不變 */
+.damage-txt { 
+    position: absolute; 
+    color: #ffeb3b; 
+    font-weight: bold; 
+    font-size: 32px; 
+    -webkit-text-stroke: 1px red; 
+    animation: upfade 0.8s forwards; 
+    z-index: 20; 
+}
+
+@keyframes upfade { 
+    from { transform: translateY(0); opacity: 1; } 
+    to { transform: translateY(-40px); opacity: 0; } 
+}
+
+@keyframes float { 
+    0%, 100% { transform: translateY(0); } 
+    50% { transform: translateY(-15px); } 
+}
+
+    /* 地圖卡片 */
+    .map-card { 
+        height: 100px; border: 3px solid white; margin: 10px 0; border-radius: 15px; 
+        cursor: pointer; transition: 0.2s; position: relative; overflow: hidden;
+        display: flex; flex-direction: column; justify-content: center; color: white; text-shadow: 1px 1px 5px #000;
+    }
+    .map-card::before { content: ""; position: absolute; top:0; left:0; right:0; bottom:0; background-size: cover; background-position: center; z-index: -1; transition: 0.3s; }
+    .map-forest::before { background-image: url('https://lh3.googleusercontent.com/d/1SlMJXpajdvDlgrXzcIA8xjacmPTPu58G'); }
+    .map-deep::before { background-image: url('https://lh3.googleusercontent.com/d/1aXlbWAAdArJp84ONKPQtmEpJHZBaxZii'); }
+
+/* 正方形操作按鈕 */
+.square-btn {
+    flex: 1;
+    height: 110px; /* 固定高度 */
+    border-radius: 15px;
+    border: 3px solid #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    color: white;
+    font-weight: bold;
+    box-shadow: 0 4px 0 rgba(0,0,0,0.3);
+}
+
+.square-btn:active {
+    transform: translateY(4px);
+    box-shadow: none;
+}
+
+/* 打擊按鈕：深灰色背景 */
+.atk-btn {
+    background: linear-gradient(135deg, #666, #222);
+}
+
+/* 失誤按鈕：紅色背景 */
+.miss-btn {
+    background: linear-gradient(135deg, #ff4d4d, #b30000);
+}
+
+/* 技能按鈕微調 (避免佔用太多空間) */
+.skill-btn {
+    flex: 1;
+    font-size: 12px;
+    padding: 5px;
+    border-radius: 8px;
+    border: 1px solid #fff;
+    background: #444;
+    color: white;
+
+}
+
+.skill-btn, .atk-btn {
+    pointer-events: auto; /* 確保自己可點擊 */
+    position: relative;
+    z-index: 10; /* 給予明確的層級 */
+}
+
+/* 確保圖片不會干擾點擊判定 */
+.skill-btn img, .atk-btn img {
+    pointer-events: none;
+}
+
+/* 定義基礎圖片變數 */
+:root {
+    /* 您的 Google Drive 圖片直接下載路徑 */
+    --lightning-bone-url: url("https://lh3.googleusercontent.com/d/1TEYi0Cd0A0IBNi2oRdugq9l7dysa2M2g");
+}
+
+/* 當標籤啟動時，強制換成您的這張圖 */
+body.has-lightning-bone #skill-3 img {
+    content: var(--lightning-bone-url) !important;
+}
+
+/* 強制讓圖片顯示變數中的內容 */
+#skill-3 img {
+    content: var(--skill-3-icon) !important;
+    width: 80%;
+    height: 80%;
+    object-fit: cover;
+}
+
+
