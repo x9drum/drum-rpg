@@ -111,7 +111,8 @@ function handleImageUpload(event) {
     const name = nameEl.value || "城九學生";
     const file = avatarEl.files[0];
 
- const finalizeEntry = (imageData) => {
+const finalizeEntry = (imageData) => {
+    // 1. 產生新角色資料
     const newChar = {
         id: Date.now(), 
         name: name,
@@ -122,33 +123,33 @@ function handleImageUpload(event) {
     };
 
     if (typeof playerList !== 'undefined') {
-        // 1. 將新角色放入清單
+        // 2. 先將角色推入清單陣列
         playerList.push(newChar);
 
-        // 🔴 關鍵整合：告訴系統現在的「活動玩家」就是這一位
-        // 這樣 saveAllData() 進去後才抓得到資料
+        // 🔴 關鍵整合點：必須在 saveAllData 之前完成這兩行
+        // 這會讓 saveAllData 知道要存誰、存哪裡
         player = newChar; 
         playerIndex = playerList.length - 1; 
 
-        // 2. 執行存檔 (此時 saveAllData 已經能抓到 player 和索引了)
+        // 3. 此時呼叫存檔就不會再出現「找不到索引」的錯誤
         saveAllData(); 
         
-        // 3. 清除輸入框內容
-        if (nameEl) nameEl.value = "";
-        if (avatarEl) avatarEl.value = "";
+        // 4. 清除 HTML UI 內容
+        if (typeof nameEl !== 'undefined' && nameEl) nameEl.value = "";
+        if (typeof avatarEl !== 'undefined' && avatarEl) avatarEl.value = "";
         
-        // 4. 反饋與更新介面
+        // 5. 提示成功並更新畫面
         alert(`角色「${name}」建立成功！`);
         
         if (typeof updateLoadScreen === "function") {
             updateLoadScreen();
         }
 
-        // 🟢 選項：是否要讓學生創建完直接進入遊戲？
-        // 如果要，請取消下面這一行的註解：
-        // showMenu(); 
+        // 🟢 老師，我建議加上這一行，讓學生建立完直接進入選單，不用再點一次頭像
+        showMenu(); 
     }
 };
+
 
     // 2. 圖片壓縮邏輯 (解決平板空間爆掉的核心)
     if (file) {
@@ -1001,4 +1002,5 @@ function createEffect(txt, parentId) {
         }
     }, 800);
 }    
+
 
