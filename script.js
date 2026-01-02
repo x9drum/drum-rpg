@@ -923,30 +923,6 @@ function showLootScreen(xp, gold, items) {
     }
 }
 
-function exportData() {
-    // 取得現有的存檔物件
-    const data = localStorage.getItem('drumRPG_save'); 
-    if (!data) return alert("尚未有存檔紀錄");
-    
-    // 轉為 Base64 格式方便複製
-    const encodedData = btoa(encodeURIComponent(data));
-    navigator.clipboard.writeText(encodedData).then(() => {
-        alert("存檔代碼已複製！請存到記事本，更換裝置或網址時可還原。");
-    });
-}
-
-function importData() {
-    const code = prompt("請貼入備份代碼：");
-    if (!code) return;
-    try {
-        const decodedData = decodeURIComponent(atob(code));
-        localStorage.setItem('drumRPG_save', decodedData);
-        alert("還原成功！請重新整理網頁。");
-        location.reload();
-    } catch (e) {
-        alert("代碼錯誤，無法還原。");
-    }
-}
 
 
  // 產生文字特效的工具函式
