@@ -203,15 +203,26 @@ function saveNewChar(nameEl, avatarEl) {
         showMenu();
     }
 
-    // 刪除角色功能
-    function deleteChar(event, index) {
-        event.stopPropagation(); // 防止點擊垃圾桶時觸發 selectPlayer
-        if(confirm(`確定要刪除角色「${playerList[index].name}」嗎？`)) {
-            playerList.splice(index, 1);
-            ();
-            updateLoadScreen();
+function deleteChar(event, index) {
+    event.stopPropagation(); // 防止點擊垃圾桶時觸發 selectPlayer
+    if(confirm(`確定要刪除角色「${playerList[index].name}」嗎？`)) {
+        
+        // 1. 從陣列中移除該角色
+        playerList.splice(index, 1);
+        
+        // ✅ 修正：補上存檔函式名稱，確保刪除動作被永久記錄
+        saveAllData(); 
+        
+        // 2. 更新右側選單畫面
+        updateLoadScreen();
+        
+        // 3. 科學防呆：如果刪除的是正在使用的角色，重置狀態避免報錯
+        if (playerIndex === index) {
+            player = null;
+            playerIndex = -1;
         }
     }
+}
 
 // 統一儲存函式
 function saveAllData() {
@@ -999,6 +1010,7 @@ function createEffect(txt, parentId) {
         }
     }, 800);
 }    
+
 
 
 
