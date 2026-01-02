@@ -11,6 +11,8 @@ if (window.battle) {
     });
 }
 
+const SAVE_KEY = "drumRPG_save_v1"; // 統一管理存檔名稱
+
 const BOSS_DATA = {
     "forest": {
         name: "🐶 終極皮卡犬 (BOSS)",
@@ -530,7 +532,6 @@ function handleImageUpload(event) {
         }
     }
 
-// 統一儲存函式
 function saveAllData() {
     // 1. 檢查索引是否存在，若不存在則嘗試重新抓取或略過
     if (playerIndex === -1) {
@@ -561,6 +562,54 @@ function saveAllData() {
         } else {
             alert("❌ 存檔發生未知錯誤，請檢查主控台。");
         }
+    }
+}
+
+
+// 統一儲存函式
+async function exportSaveToClipboard() {
+    // 🔍 科學對接：讀取您在 saveAllData 裡設定的單一角色 Key
+    const saveData = localStorage.getItem('RPG_SaveData');
+
+    if (!saveData) {
+        // 如果單一角色不存在，嘗試從清單抓取當前角色
+        if (player) {
+            saveAllData(); // 強制執行一次存檔來產生 Key
+            return exportSaveToClipboard(); // 重新嘗試
+        }
+        alert("尚未有練習紀錄！");
+        return;
+    }
+
+    try {
+        // 編碼處理：確保在不同裝置傳輸時不會因為特殊字元出錯
+        const encoded = btoa(encodeURIComponent(saveData));
+        
+        // 嘗試自動複製
+        await navigator.clipboard.writeText(encoded);
+        alert("✨ 存檔代碼已成功複製到剪貼簿！\n您可以將它傳給老師或存在備忘錄。");
+    } catch (err) {
+        // 平板保底方案
+        prompt("請長按複製下方代碼進行備份：", btoa(encodeURIComponent(saveData)));
+    }
+}
+
+function importSaveFromInput() {
+    const code = prompt("請貼入備份的存檔代碼：");
+    if (!code) return;
+
+    try {
+        const decoded = decodeURIComponent(atob(code));
+        // 驗證 JSON 格式是否正確
+        JSON.parse(decoded); 
+        
+        // 寫入您定義的備份 Key
+        localStorage.setItem('RPG_SaveData', decoded);
+        
+        alert("✅ 導入成功！即將重新載入...");
+        location.reload();
+    } catch(e) {
+        alert("❌ 無效的代碼，請確認是否完整複製。");
     }
 }
 
@@ -1442,4 +1491,74 @@ function renderPlayerStats() {
             </div>
             </div>`;
 }
+/**
+ * 鼓手練習系統 - 備份模組
+ * 適用於：PC (下載/複製) 與 平板 (複製代碼)
+ * 對接 Key: RPG_SaveData (單一當前角色)
+ */
+
+// 1. 導出存檔並自動複製 (最適合平板)
+async function exportSaveToClipboard() {
+    // 確保有最新資料
+    if (typeof saveAllData === 'function') saveAllData();
+    
+    const saveData = localStorage.getItem('RPG_SaveData');
+    if (!saveData) return alert("尚未有練習紀錄！");
+
+    // Base64 編碼處理：確保字串在社群軟體或備忘錄傳輸時不因特殊字元損毀
+    const encoded = btoa(encodeURIComponent(saveData));
+
+    try {
+        await navigator.clipboard.writeText(encoded);
+        alert("✨ 存檔成功複製到剪貼簿！\n您可以貼在備忘錄中保存目前的練習進度。");
+    } catch (err) {
+        // 如果瀏覽器安全性攔截自動複製，則改用 prompt
+        prompt("請長按全選並複製下方代碼：", encoded);
+    }
+}
+
+// 2. 導入存檔 (代碼還原)
+function importSaveFromInput() {
+    const code = prompt("請貼入備份的存檔代碼：");
+    if (!code) return;
+
+    try {
+        const decoded = decodeURIComponent(atob(code));
+        // 科學驗證：確保內容是合法的 JSON 格式
+        JSON.parse(decoded);
+        
+        // 寫入系統 Key，強制更新當前角色資料
+        localStorage.setItem('RPG_SaveData', decoded);
+        
+        alert("✅ 紀錄導入成功！即將重新載入遊戲...");
+        location.reload();
+    } catch(e) {
+        alert("❌ 無效的代碼，請確認是否完整複製（不可少任何字元）。");
+    }
+}
+
+// 3. 下載存檔檔案 (最適合 PC 備份)
+function downloadSaveAsFile() {
+    if (typeof saveAllData === 'function') saveAllData();
+    
+    const saveData = localStorage.getItem('RPG_SaveData');
+    if (!saveData) return alert("尚無紀錄可供下載");
+
+    const blob = new Blob([saveData], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    
+    // 檔名科學化：[日期] 鼓手名稱_練習紀錄.txt
+    const date = new Date().toISOString().slice(0, 10);
+    const fileName = (player && player.name) ? `${player.name}_練習紀錄` : "鼓手練習紀錄";
+    
+    a.download = `${date}_${fileName}.txt`;
+    a.href = url;
+    a.click();
+    
+    // 釋放記憶體
+    URL.revokeObjectURL(url);
+}
+
+
 
