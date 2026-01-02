@@ -111,28 +111,44 @@ function handleImageUpload(event) {
     const name = nameEl.value || "城九學生";
     const file = avatarEl.files[0];
 
-    const finalizeEntry = (imageData) => {
-        const newChar = {
-            id: Date.now(), 
-            name: name,
-            avatar: imageData, 
-            lv: 1, hp: 10, maxHp: 10, xp: 0, nextXp: 10, gold: 0, 
-            inv: [],
-            killCount: 0 
-        };
-
-        if (typeof playerList !== 'undefined') {
-            playerList.push(newChar);
-            saveAllData(); 
-            
-            // 清除內容
-            nameEl.value = "";
-            avatarEl.value = "";
-            
-            alert(`角色「${name}」建立成功！`);
-            if (typeof updateLoadScreen === "function") updateLoadScreen();
-        }
+ const finalizeEntry = (imageData) => {
+    const newChar = {
+        id: Date.now(), 
+        name: name,
+        avatar: imageData, 
+        lv: 1, hp: 10, maxHp: 10, xp: 0, nextXp: 10, gold: 0, 
+        inv: [],
+        killCount: 0 
     };
+
+    if (typeof playerList !== 'undefined') {
+        // 1. 將新角色放入清單
+        playerList.push(newChar);
+
+        // 🔴 關鍵整合：告訴系統現在的「活動玩家」就是這一位
+        // 這樣 saveAllData() 進去後才抓得到資料
+        player = newChar; 
+        playerIndex = playerList.length - 1; 
+
+        // 2. 執行存檔 (此時 saveAllData 已經能抓到 player 和索引了)
+        saveAllData(); 
+        
+        // 3. 清除輸入框內容
+        if (nameEl) nameEl.value = "";
+        if (avatarEl) avatarEl.value = "";
+        
+        // 4. 反饋與更新介面
+        alert(`角色「${name}」建立成功！`);
+        
+        if (typeof updateLoadScreen === "function") {
+            updateLoadScreen();
+        }
+
+        // 🟢 選項：是否要讓學生創建完直接進入遊戲？
+        // 如果要，請取消下面這一行的註解：
+        // showMenu(); 
+    }
+};
 
     // 2. 圖片壓縮邏輯 (解決平板空間爆掉的核心)
     if (file) {
@@ -194,39 +210,51 @@ function handleImageUpload(event) {
         event.stopPropagation(); // 防止點擊垃圾桶時觸發 selectPlayer
         if(confirm(`確定要刪除角色「${playerList[index].name}」嗎？`)) {
             playerList.splice(index, 1);
-            saveAllData();
+            ();
             updateLoadScreen();
         }
     }
 
 // 統一儲存函式
 function saveAllData() {
-    // 1. 檢查索引是否存在，若不存在則嘗試重新抓取或略過
+    // 1. 基礎防呆：如果連 player 物件都沒有，代表完全沒人在玩，直接終止
+    if (!player) {
+        console.warn("【系統】當前無活動玩家，跳過存檔。");
+        return;
+    }
+
+    // 2. 智能索引修復：
+    // 如果索引是 -1，代表是剛創建的角色或剛重新整理網頁。
+    // 我們透過 id 在 playerList 尋找它的最新位置。
     if (playerIndex === -1) {
-        console.error("錯誤：找不到玩家索引，存檔終止。");
-        return; 
+        playerIndex = playerList.findIndex(p => p.id === player.id);
+        
+        // 如果連在清單中都找不到，說明是全新的角色，先推入清單
+        if (playerIndex === -1) {
+            playerList.push(player);
+            playerIndex = playerList.length - 1;
+            console.log("【系統】檢測到新角色，已自動分配索引:", playerIndex);
+        }
     }
 
     try {
-        // 2. 更新當前玩家資料到清單
+        // 3. 更新當前玩家資料到清單
         playerList[playerIndex] = player;
         
-        // 3. 準備序列化資料
+        // 4. 準備序列化資料
         const listData = JSON.stringify(playerList);
         const singleData = JSON.stringify(player);
 
-        // 4. 存入 localStorage (主要清單)
+        // 5. 存入 localStorage
         localStorage.setItem('drumRPG_players', listData);
-        
-        // 5. 存入備份鍵名 (單一角色備份)
         localStorage.setItem('RPG_SaveData', singleData);
 
-        console.log("【存檔成功】玩家索引:", playerIndex);
+        console.log("【存檔成功】玩家:", player.name, " 索引:", playerIndex);
     } catch (e) {
-        // 針對平板最常發生的 QuotaExceededError (儲存空間爆滿)
+        // 針對平板儲存空間爆滿的處理
         console.error("存檔失敗！", e);
         if (e.name === 'QuotaExceededError' || e.code === 22) {
-            alert("❌ 儲存空間已滿！\n原因：角色頭像檔案太大了。\n請更換較小的圖片，否則進度無法儲存。");
+            alert("❌ 儲存空間已滿！\n原因：角色頭像檔案太大了。\n請刪除舊角色或使用較小的圖片。");
         } else {
             alert("❌ 存檔發生未知錯誤，請檢查主控台。");
         }
@@ -973,3 +1001,4 @@ function createEffect(txt, parentId) {
         }
     }, 800);
 }    
+
