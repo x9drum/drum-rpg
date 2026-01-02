@@ -98,60 +98,54 @@ function handleImageUpload(event) {
     reader.readAsDataURL(file);
 }
 
-    // 新建角色：不覆蓋舊角色，而是 push 進陣列
-    function saveNewChar(nameEl, avatarEl) {
-    // 1. 科學防呆：如果 HTML 沒抓到，立刻停止並給予提示
+// 新建角色：不覆蓋舊角色，而是 push 進陣列
+function saveNewChar(nameEl, avatarEl) {
+    // 1. 科學防呆
     if (!nameEl || !avatarEl) {
-        alert("系統錯誤：找不到輸入框！請確認 HTML 中的 id 是否正確。");
-        console.error("目前抓到的名稱輸入框:", nameEl);
-        console.error("目前抓到的頭像輸入框:", avatarEl);
+        alert("系統錯誤：找不到輸入框！");
         return;
     }
 
     const name = nameEl.value || "城九學生";
     const file = avatarEl.files[0];
 
-const finalizeEntry = (imageData) => {
-    // 1. 產生新角色資料
-    const newChar = {
-        id: Date.now(), 
-        name: name,
-        avatar: imageData, 
-        lv: 1, hp: 10, maxHp: 10, xp: 0, nextXp: 10, gold: 0, 
-        inv: [],
-        killCount: 0 
+    // 核心處理函式
+    const finalizeEntry = (imageData) => {
+        // A. 產生新角色物件
+        const newChar = {
+            id: Date.now(), 
+            name: name,
+            avatar: imageData, 
+            lv: 1, hp: 10, maxHp: 10, xp: 0, nextXp: 10, gold: 0, 
+            inv: [],
+            killCount: 0 
+        };
+
+        if (typeof playerList !== 'undefined') {
+            // B. 先進入清單
+            playerList.push(newChar);
+
+            // 🔴 關鍵點：先讓全域變數 player 指向這個新角色，並計算索引
+            player = newChar; 
+            playerIndex = playerList.length - 1; 
+
+            // C. 此時呼叫儲存，saveAllData 就不會因為找不到索引而終止
+            saveAllData(); 
+            
+            // D. UI 清除與通知
+            if (nameEl) nameEl.value = "";
+            if (avatarEl) avatarEl.value = "";
+            
+            alert(`角色「${name}」建立成功！`);
+            
+            if (typeof updateLoadScreen === "function") updateLoadScreen();
+            
+            // 直接進入選單
+            showMenu(); 
+        }
     };
 
-    if (typeof playerList !== 'undefined') {
-        // 2. 先將角色推入清單陣列
-        playerList.push(newChar);
-
-        // 🔴 關鍵整合點：必須在 saveAllData 之前完成這兩行
-        // 這會讓 saveAllData 知道要存誰、存哪裡
-        player = newChar; 
-        playerIndex = playerList.length - 1; 
-
-        // 3. 此時呼叫存檔就不會再出現「找不到索引」的錯誤
-        saveAllData(); 
-        
-        // 4. 清除 HTML UI 內容
-        if (typeof nameEl !== 'undefined' && nameEl) nameEl.value = "";
-        if (typeof avatarEl !== 'undefined' && avatarEl) avatarEl.value = "";
-        
-        // 5. 提示成功並更新畫面
-        alert(`角色「${name}」建立成功！`);
-        
-        if (typeof updateLoadScreen === "function") {
-            updateLoadScreen();
-        }
-
-        // 🟢 老師，我建議加上這一行，讓學生建立完直接進入選單，不用再點一次頭像
-        showMenu(); 
-    }
-};
-
-
-    // 2. 圖片壓縮邏輯 (解決平板空間爆掉的核心)
+    // 2. 圖片處理 (圖片壓縮邏輯)
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -163,13 +157,16 @@ const finalizeEntry = (imageData) => {
                 canvas.height = SIZE;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, SIZE, SIZE);
+                // 壓縮為 0.7 品質的 JPG
                 finalizeEntry(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     } else {
-        finalizeEntry('https://via.placeholder.com/60');
+        // 🟢 修正：使用內建 SVG 頭像數據，避免 ERR_NAME_NOT_RESOLVED
+        const defaultAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3Cpath d='M32 32a12 12 0 1 0-12-12 12 12 0 0 0 12 12zM12 52a20 20 0 0 1 40 0' fill='%23999'/%3E%3C/svg%3E";
+        finalizeEntry(defaultAvatar);
     }
 }
 
@@ -1002,5 +999,6 @@ function createEffect(txt, parentId) {
         }
     }, 800);
 }    
+
 
 
