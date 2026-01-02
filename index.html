@@ -67,6 +67,17 @@
     <div style="color: white; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 2px 5px;">👴 村長 (商店)</div>
 </div>
 
+
+<div style="background: rgba(0,0,0,0.3); padding: 15px; border-radius: 12px; margin: 20px auto 10px; width: 90%; max-width: 400px; border: 1px solid rgba(255,255,255,0.1); box-sizing: border-box;">
+    <p style="color: #f5a623; font-size: 13px; margin: 0 0 10px 0; font-weight: bold; text-align: center;">💾 紀錄管理 (平板備份用)</p>
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+        <button onclick="exportSaveToClipboard()" style="padding: 10px; font-size: 12px; background: #5d4037; color: white; border: 1px solid #8b4513; border-radius: 6px; cursor: pointer;">📋 複製代碼</button>
+        <button onclick="importSaveFromInput()" style="padding: 10px; font-size: 12px; background: #5d4037; color: white; border: 1px solid #8b4513; border-radius: 6px; cursor: pointer;">📥 導入紀錄</button>
+        <button onclick="downloadSaveAsFile()" style="grid-column: span 2; padding: 10px; font-size: 12px; background: #455a64; color: white; border: 1px solid #263238; border-radius: 6px; cursor: pointer;">💾 下載存檔 (.txt)</button>
+    </div>
+</div>
+
+
     <button onclick="resetData()" style="color:white; cursor:pointer; background:none; border:none; opacity:0.6; margin-top: 20px;">清除存檔</button>
 </div>
 
@@ -174,16 +185,20 @@
                     <span id="sell-total" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 8px;">獲利: 0</span>
                     <button onclick="executeSell()" class="atk-btn" style="background: #2e7d32; border: none;">賣出所選</button>
                     <button onclick="closeShop()" class="miss-btn" style="margin-top:10px; width: 100%;">離開商店</button>
+
+
                 </div>
             </div>
         </div>
     </div>
 </div>
-</div>
+
+
     <script src="script.js"></script> </body>    
 </body>
    
 </html>
+
 
 
 
