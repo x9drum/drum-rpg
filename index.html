@@ -16,7 +16,7 @@
             <input type="file" id="avatar-input" accept="image/*" style="margin-bottom:20px; font-size: 14px;">
             <button class="atk-btn" onclick="saveNewChar(document.getElementById('name-input'), document.getElementById('avatar-input'))">✨ 創建並開始</button>
         </div>
-        <p style="font-size: 12px; color: #666;">(註：建立新角色會覆蓋舊存檔)</p>
+        <p style="font-size: 12px; color: #666;">(註：建議上傳正方形照片)</p>
     </div>
 
     <div id="load-screen" class="screen">
@@ -29,7 +29,13 @@
 
 <div id="menu-screen" class="screen hidden">
     <div id="player-profile" class="char-info"></div>
-    <h2 style="color:white; text-shadow: 2px 2px 4px #000;">🗺️ 選擇練習區域</h2>
+    
+    <div id="backpack-trigger" onclick="toggleBackpack()" style="margin: 10px auto; cursor: pointer; display: inline-block; transition: 0.3s;">
+        <img src="https://drive.google.com/thumbnail?id=1WwWVJNGheowu1DiEuRfQkBoKRPDoqN4b&sz=w200" style="width: 50px; height: 50px; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.5));" alt="背包">
+        <div style="font-size: 12px; color: #fff; text-shadow: 1px 1px 2px #000;">點擊開啟背包</div>
+    </div>
+
+    <h2 style="color:white; text-shadow: 2px 2px 4px #000; margin-top: 10px;">🗺️ 選擇練習區域</h2>
 
     <div style="display: flex; gap: 20px; justify-content: center; align-items: flex-start; padding: 10px;">
         <div style="flex: 1; display: flex; flex-direction: column; gap: 15px;">
@@ -56,9 +62,30 @@
             </button>
         </div>
     </div>
+<div id="npc-village-head" onclick="openShop()" style="margin: 30px auto 10px; cursor: pointer; text-align: center; width: 120px; transition: transform 0.2s;">
+    <img src="https://drive.google.com/thumbnail?id=1BbzvUIIgyQgYKwy-8Ym48jzV8SmDX2rZ&sz=w200" style="width: 80px; filter: drop-shadow(2px 2px 5px rgba(0,0,0,0.5));" alt="村長">
+    <div style="color: white; font-size: 14px; font-weight: bold; text-shadow: 1px 1px 2px #000; background: rgba(0,0,0,0.5); border-radius: 10px; padding: 2px 5px;">👴 村長 (商店)</div>
+</div>
+
     <button onclick="resetData()" style="color:white; cursor:pointer; background:none; border:none; opacity:0.6; margin-top: 20px;">清除存檔</button>
 </div>
 
+<div id="backpack-modal" class="hidden" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+    <div style="background: #4a3728; border: 4px solid #8b4513; border-radius: 15px; padding: 20px; width: 320px; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <span style="font-size: 20px;"></span>
+            <h3 style="color: #f5a623; margin: 0;">冒險者背包</h3>
+            <button onclick="toggleBackpack()" style="background: #8b4513; border: none; color: white; border-radius: 5px; cursor: pointer;">✖</button>
+        </div>
+        
+        <div id="backpack-grid" style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; margin-bottom: 20px;">
+            </div>
+
+        <div style="background: #2c1e14; border-radius: 10px; padding: 12px; text-align: center; border: 2px solid #f5a623; box-shadow: inset 0 0 10px #000;">
+            <span style="color: #f5a623; font-weight: bold; font-size: 18px;"><span id="backpack-gold">0</span></span>
+        </div>
+    </div>
+</div>
 
 <div id="battle-screen" class="screen hidden">
     <img id="battle-bg-object" src="" style="display: none;">
@@ -84,27 +111,19 @@
         <div class="bar-container"><div id="p-xp-fill" class="xp-fill"></div><div id="p-xp-txt" class="bar-text"></div></div>
 
         <div class="battle-controls" style="display: flex; gap: 8px; margin: 10px 0;">
-    <button id="skill-1" class="skill-btn" onclick="useSkill(1)" style="position: relative; padding: 0; overflow: hidden;">
-        <img src="https://lh3.googleusercontent.com/d/1CkT-BapEdjWYgv2WJHfEELGRXPRcUBYG" style="width: 80%; height: 80%; object-fit: cover; display: block;">
-        <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">
-            (<span id="cd-1">0</span>)
+            <button id="skill-1" class="skill-btn" onclick="useSkill(1)" style="position: relative; padding: 0; overflow: hidden;">
+                <img src="https://lh3.googleusercontent.com/d/1CkT-BapEdjWYgv2WJHfEELGRXPRcUBYG" style="width: 80%; height: 80%; object-fit: cover; display: block;">
+                <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">(<span id="cd-1">0</span>)</div>
+            </button>
+            <button id="skill-2" class="skill-btn" onclick="useSkill(2)" style="position: relative; padding: 0; overflow: hidden;">
+                <img src="https://lh3.googleusercontent.com/d/1mplDQMSpqTZLHRMskETUkV2qds9bysPP" style="width: 80%; height: 80%; object-fit: cover; display: block;">
+                <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">(<span id="cd-2">0</span>)</div>
+            </button>
+            <button id="skill-3" class="skill-btn" onclick="useSkill(3)" style="position: relative; padding: 0; overflow: hidden;">
+                <img src="https://lh3.googleusercontent.com/d/1T4KmHUNFhaVPtl_9_0GYdUF2mdGL9kRi" style="width: 80%; height: 80%; object-fit: cover; display: block;">
+                <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">(<span id="cd-3">0</span>)</div>
+            </button>
         </div>
-    </button>
-
-    <button id="skill-2" class="skill-btn" onclick="useSkill(2)" style="position: relative; padding: 0; overflow: hidden;">
-        <img src="https://lh3.googleusercontent.com/d/1mplDQMSpqTZLHRMskETUkV2qds9bysPP" style="width: 80%; height: 80%; object-fit: cover; display: block;">
-        <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">
-            (<span id="cd-2">0</span>)
-        </div>
-    </button>
-
-    <button id="skill-3" class="skill-btn" onclick="useSkill(3)" style="position: relative; padding: 0; overflow: hidden;">
-        <img src="https://lh3.googleusercontent.com/d/1T4KmHUNFhaVPtl_9_0GYdUF2mdGL9kRi" style="width: 80%; height: 80%; object-fit: cover; display: block;">
-        <div style="position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.5); color: white; font-size: 10px;">
-            (<span id="cd-3">0</span>)
-        </div>
-    </button>
-</div>
 
         <div style="display: flex; justify-content: space-between; gap: 15px; margin-top: 5px;">
             <button onclick="playerAtk()" class="square-btn atk-btn" id="atk-display">
@@ -117,7 +136,6 @@
             </button>
         </div>
     </div>
-    <div class="battle-footer"></div>
 </div>
 
 <div id="loot-screen" class="screen hidden">
@@ -127,11 +145,44 @@
         <div id="xp-gold-display" style="font-size:1.2em; margin-bottom:15px; font-weight:bold;"></div>
         <div id="item-drops" style="display:flex; flex-wrap:wrap; justify-content:center; gap:10px;"></div>
     </div>
-    <button onclick="showMenu()" style="background: var(--forest-green); color: white; padding: 15px 40px; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">返回選單</button>
+    <button onclick="showMenu()" style="background: var(--forest-green); color: white; padding: 15px 40px; border: none; border-radius: 10px; font-size: 1.1em; cursor: pointer;">返回選單</button>
 </div>
 
-    <script src="script.js"></script>
+<div id="shop-modal" class="hidden">
+    <div class="shop-container" style="display: flex; gap: 0; padding: 0; overflow: hidden; border: 4px solid #8b4513; border-radius: 15px; width: 95%; max-width: 900px;">
+        
+        <div class="shop-shelf" style="flex: 1; padding: 20px; position: relative; background: url('https://drive.google.com/thumbnail?id=1BbzvUIIgyQgYKwy-8Ym48jzV8SmDX2rZ&sz=w800') no-repeat center center; background-size: cover;">
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(62, 39, 35, 0.7); z-index: 1;"></div>
+            
+            <div style="position: relative; z-index: 2;">
+                <h3 style="text-align: center; color: #f5a623; margin-top: 0;">📦 商店貨架</h3>
+                <div id="shop-grid" class="grid-5x5"></div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <span id="buy-total" style="color: #f5a623; font-weight: bold; display: block; margin-bottom: 8px;">總計: 0</span>
+                    <button onclick="executePurchase()" class="atk-btn">購買所選</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="player-inv-side" style="flex: 1; padding: 20px; position: relative; background: url('https://drive.google.com/thumbnail?id=1BbzvUIIgyQgYKwy-8Ym48jzV8SmDX2rZ&sz=w800') no-repeat center center; background-size: cover; border-left: 4px solid #8b4513;">
+            <div style="position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(46, 125, 50, 0.7); z-index: 1;"></div>
+            
+            <div style="position: relative; z-index: 2;">
+                <h3 style="text-align: center; color: #fff; margin-top: 0;">🎒 冒險者背包</h3>
+                <div id="shop-player-grid" class="grid-5x5"></div>
+                <div style="margin-top: 15px; text-align: center;">
+                    <span id="sell-total" style="color: #00ff00; font-weight: bold; display: block; margin-bottom: 8px;">獲利: 0</span>
+                    <button onclick="executeSell()" class="atk-btn" style="background: #2e7d32; border: none;">賣出所選</button>
+                    <button onclick="closeShop()" class="miss-btn" style="margin-top:10px; width: 100%;">離開商店</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
 </body>
 </html>
+
 
 
