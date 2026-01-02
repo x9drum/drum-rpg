@@ -98,20 +98,20 @@ function handleImageUpload(event) {
     reader.readAsDataURL(file);
 }
 
-// 新建角色：不覆蓋舊角色，而是 push 進陣列
-function saveNewChar(nameEl, avatarEl) {
-    // 1. 科學防呆
+    // 新建角色：不覆蓋舊角色，而是 push 進陣列
+    function saveNewChar(nameEl, avatarEl) {
+    // 1. 科學防呆：如果 HTML 沒抓到，立刻停止並給予提示
     if (!nameEl || !avatarEl) {
-        alert("系統錯誤：找不到輸入框！");
+        alert("系統錯誤：找不到輸入框！請確認 HTML 中的 id 是否正確。");
+        console.error("目前抓到的名稱輸入框:", nameEl);
+        console.error("目前抓到的頭像輸入框:", avatarEl);
         return;
     }
 
     const name = nameEl.value || "城九學生";
     const file = avatarEl.files[0];
 
-    // 核心處理函式
     const finalizeEntry = (imageData) => {
-        // A. 產生新角色物件
         const newChar = {
             id: Date.now(), 
             name: name,
@@ -122,30 +122,19 @@ function saveNewChar(nameEl, avatarEl) {
         };
 
         if (typeof playerList !== 'undefined') {
-            // B. 先進入清單
             playerList.push(newChar);
-
-            // 🔴 關鍵點：先讓全域變數 player 指向這個新角色，並計算索引
-            player = newChar; 
-            playerIndex = playerList.length - 1; 
-
-            // C. 此時呼叫儲存，saveAllData 就不會因為找不到索引而終止
             saveAllData(); 
             
-            // D. UI 清除與通知
-            if (nameEl) nameEl.value = "";
-            if (avatarEl) avatarEl.value = "";
+            // 清除內容
+            nameEl.value = "";
+            avatarEl.value = "";
             
             alert(`角色「${name}」建立成功！`);
-            
             if (typeof updateLoadScreen === "function") updateLoadScreen();
-            
-            // 直接進入選單
-            showMenu(); 
         }
     };
 
-    // 2. 圖片處理 (圖片壓縮邏輯)
+    // 2. 圖片壓縮邏輯 (解決平板空間爆掉的核心)
     if (file) {
         const reader = new FileReader();
         reader.onload = (e) => {
@@ -157,16 +146,13 @@ function saveNewChar(nameEl, avatarEl) {
                 canvas.height = SIZE;
                 const ctx = canvas.getContext('2d');
                 ctx.drawImage(img, 0, 0, SIZE, SIZE);
-                // 壓縮為 0.7 品質的 JPG
                 finalizeEntry(canvas.toDataURL('image/jpeg', 0.7));
             };
             img.src = e.target.result;
         };
         reader.readAsDataURL(file);
     } else {
-        // 🟢 修正：使用內建 SVG 頭像數據，避免 ERR_NAME_NOT_RESOLVED
-        const defaultAvatar = "data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%23ddd'/%3E%3Cpath d='M32 32a12 12 0 1 0-12-12 12 12 0 0 0 12 12zM12 52a20 20 0 0 1 40 0' fill='%23999'/%3E%3C/svg%3E";
-        finalizeEntry(defaultAvatar);
+        finalizeEntry('https://via.placeholder.com/60');
     }
 }
 
@@ -203,67 +189,44 @@ function saveNewChar(nameEl, avatarEl) {
         showMenu();
     }
 
-function deleteChar(event, index) {
-    event.stopPropagation(); // 防止點擊垃圾桶時觸發 selectPlayer
-    if(confirm(`確定要刪除角色「${playerList[index].name}」嗎？`)) {
-        
-        // 1. 從陣列中移除該角色
-        playerList.splice(index, 1);
-        
-        // ✅ 修正：補上存檔函式名稱，確保刪除動作被永久記錄
-        saveAllData(); 
-        
-        // 2. 更新右側選單畫面
-        updateLoadScreen();
-        
-        // 3. 科學防呆：如果刪除的是正在使用的角色，重置狀態避免報錯
-        if (playerIndex === index) {
-            player = null;
-            playerIndex = -1;
+    // 刪除角色功能
+    function deleteChar(event, index) {
+        event.stopPropagation(); // 防止點擊垃圾桶時觸發 selectPlayer
+        if(confirm(`確定要刪除角色「${playerList[index].name}」嗎？`)) {
+            playerList.splice(index, 1);
+            saveAllData();
+            updateLoadScreen();
         }
     }
-}
 
 // 統一儲存函式
 function saveAllData() {
-    // 1. 基礎防呆：如果連 player 物件都沒有，代表完全沒人在玩，直接終止
-    if (!player) {
-        console.warn("【系統】當前無活動玩家，跳過存檔。");
-        return;
-    }
-
-    // 2. 智能索引修復：
-    // 如果索引是 -1，代表是剛創建的角色或剛重新整理網頁。
-    // 我們透過 id 在 playerList 尋找它的最新位置。
+    // 1. 檢查索引是否存在，若不存在則嘗試重新抓取或略過
     if (playerIndex === -1) {
-        playerIndex = playerList.findIndex(p => p.id === player.id);
-        
-        // 如果連在清單中都找不到，說明是全新的角色，先推入清單
-        if (playerIndex === -1) {
-            playerList.push(player);
-            playerIndex = playerList.length - 1;
-            console.log("【系統】檢測到新角色，已自動分配索引:", playerIndex);
-        }
+        console.error("錯誤：找不到玩家索引，存檔終止。");
+        return; 
     }
 
     try {
-        // 3. 更新當前玩家資料到清單
+        // 2. 更新當前玩家資料到清單
         playerList[playerIndex] = player;
         
-        // 4. 準備序列化資料
+        // 3. 準備序列化資料
         const listData = JSON.stringify(playerList);
         const singleData = JSON.stringify(player);
 
-        // 5. 存入 localStorage
+        // 4. 存入 localStorage (主要清單)
         localStorage.setItem('drumRPG_players', listData);
+        
+        // 5. 存入備份鍵名 (單一角色備份)
         localStorage.setItem('RPG_SaveData', singleData);
 
-        console.log("【存檔成功】玩家:", player.name, " 索引:", playerIndex);
+        console.log("【存檔成功】玩家索引:", playerIndex);
     } catch (e) {
-        // 針對平板儲存空間爆滿的處理
+        // 針對平板最常發生的 QuotaExceededError (儲存空間爆滿)
         console.error("存檔失敗！", e);
         if (e.name === 'QuotaExceededError' || e.code === 22) {
-            alert("❌ 儲存空間已滿！\n原因：角色頭像檔案太大了。\n請刪除舊角色或使用較小的圖片。");
+            alert("❌ 儲存空間已滿！\n原因：角色頭像檔案太大了。\n請更換較小的圖片，否則進度無法儲存。");
         } else {
             alert("❌ 存檔發生未知錯誤，請檢查主控台。");
         }
@@ -1010,7 +973,3 @@ function createEffect(txt, parentId) {
         }
     }, 800);
 }    
-
-
-
-
